@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+body {
+      margin: 0;
+      display: flex;
+      justify-content: center; /* Center horizontally */
+      align-items: center; /* Center vertically */
+      height: 100vh;
+      background-color: black;
+    }
+
+    #canvas {
+      background-color: black;
+      border: 3px solid white;
+
+    }
+    #penSizeSlider {
+      position: absolute;
+      left: 50%; /* Horizontally center the slider */
+      bottom: 20px; /* Adjust bottom position for spacing */
+      transform: translateX(-50%); /* Center the slider correctly */
+    }
+
+  </style>
+</head>
+<body>
+  <canvas id="canvas" width="1662" height="1662"></canvas>
+  <input type="range" id="penSizeSlider" min="20" max="80" value="10">
+  <button id="drawButton">Draw</button>
+  <button id="deleteButton">Delete</button>
+
+  <script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const penImage = new Image();
+    penImage.src = 'bubble.png'; // Replace with the path to your image
+    const backgroundImage = new Image();
+    backgroundImage.src = 'bath.png';
+    let isDrawing = false;
+    let penSize = 20;
+    const bubbles = [];
+
+    const penSizeSlider = document.getElementById('penSizeSlider');
+    const drawButton = document.getElementById('drawButton');
+    const deleteButton = document.getElementById('deleteButton');
+    let currentMode = 'draw';
+
+    penSizeSlider.addEventListener('input', updatePenSize);
+    drawButton.addEventListener('click', () => { currentMode = 'draw'; });
+    deleteButton.addEventListener('click', () => { currentMode = 'delete'; });
+
+    canvas.addEventListener('mousedown', handleInteraction);
+    canvas.addEventListener('mousemove', handleInteraction);
+    canvas.addEventListener('mouseup', handleInteraction);
+
+    canvas.addEventListener('touchstart', handleInteraction);
+    canvas.addEventListener('touchmove', handleInteraction);
+    canvas.addEventListener('touchend', handleInteraction);
+
+    function updatePenSize() {
+      penSize = parseInt(penSizeSlider.value);
+    }
+
+    function handleInteraction(e) {
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+
+      if (currentMode === 'draw' && isDrawing) {
+        drawBubble(x, y);
+      } else if (currentMode === 'delete') {
+        removeBubble(x, y);
+      }
+    }
+
+    function drawBubble(x, y) {
+      bubbles.push({x, y, size: penSize });
+    }
+
+    function removeBubble(x, y) {
+      for (let i = 0; i < bubbles.length; i++) {
+        const bubble = bubbles[i];
+        if (x >= bubble.x && x <= bubble.x + penSize && y >= bubble.y && y <= bubble.y + penSize) {
+          bubbles.splice(i, 1);
+          break;
+        }
+      }
+    }
+
+    function animate() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(backgroundImage, 0, 0);
+
+      for (const bubble of bubbles) {
+      const bubbleSize = bubble.size;
+      ctx.drawImage(penImage, bubble.x - bubbleSize / 2, bubble.y - bubbleSize / 2, bubbleSize, bubbleSize);
+
+      }
+
+      requestAnimationFrame(animate);
+    }
+
+    animate();
+
+    canvas.addEventListener('mousedown', startDrawing);
+    canvas.addEventListener('mousemove', draw);
+    canvas.addEventListener('mouseup', stopDrawing);
+
+    canvas.addEventListener('touchstart', startDrawing);
+    canvas.addEventListener('touchmove', draw);
+    canvas.addEventListener('touchend', stopDrawing);
+
+    function startDrawing(e) {
+      isDrawing = true;
+      draw(e);
+    }
+
+    function draw(e) {
+      if (!isDrawing || currentMode !== 'draw') return;
+
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+
+      ctx.drawImage(penImage, x - penSize / 2, y - penSize / 2, penSize, penSize);
+    }
+
+    function stopDrawing() {
+      isDrawing = false;
+    }
+  </script>
+</body>
+</html>
